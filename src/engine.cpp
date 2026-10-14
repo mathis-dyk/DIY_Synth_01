@@ -22,6 +22,14 @@ AudioConnection c7(env, 0, i2s1, 1);
 
 static int last_wave = -1;
 
+// gain de chaque osc dans le mixer quand il est allumé (osc1, osc2, sub)
+static void update_mixer() {
+    const float gains[3] = {0.25f, 0.25f, 0.25f * state.sub_level};
+    for (int i = 0; i < 3; i++) {
+        mixer.gain(i, state.osc_on[i] ? gains[i] : 0.0f);
+    }
+}
+
 void engine_setup() {
     AudioMemory(32);
 
@@ -29,10 +37,7 @@ void engine_setup() {
     osc2.begin(0.5, 220, state.waveforms[state.wave]);
     sub.begin(0.5, 110, WAVEFORM_SQUARE);
 
-    // somme max < 1.0 pour éviter la saturation (0.4 x3 saturait)
-    mixer.gain(0, 0.25);
-    mixer.gain(1, 0.25);
-    mixer.gain(2, 0.25 * state.sub_level);
+    update_mixer();
 
     filter1.frequency(state.cutoff);
     filter1.resonance(state.resonance);
@@ -48,6 +53,11 @@ void engine_update() {
         osc1.begin(state.waveforms[state.wave]);
         osc2.begin(state.waveforms[state.wave]);
         last_wave = state.wave;
+    }
+
+    if (state.osc_dirty) {
+        update_mixer();
+        state.osc_dirty = false;
     }
 
     float f = state.ribbon_freq;

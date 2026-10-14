@@ -49,16 +49,32 @@ void ui_update() {
     if (state.octave > 0) display.print("+");
     display.print(state.octave);
 
-    display.setCursor(0, 28);
+    // oscs allumés : "1 2 S", un tiret pour un osc éteint
+    const char* osc_labels[3] = {"1", "2", "S"};
+    display.setCursor(80, 14);
+    for (int i = 0; i < 3; i++) {
+        display.print(state.osc_on[i] ? osc_labels[i] : "-");
+        display.print(" ");
+    }
+
     if (playing) {
+        // note jouée en gros (ex. "C#3"), fréquence à côté
+        display.setTextSize(2);
+        display.setCursor(0, 24);
+        display.print(state.note_names[state.note]);
+        display.print(3 + state.octave);
+
+        display.setTextSize(1);
+        display.setCursor(64, 30);
         display.print(state.ribbon_freq, 1);
         display.print(" Hz");
     } else {
+        display.setCursor(0, 28);
         display.print("touche le ribbon");
     }
 
     // barre de position du ribbon
-    int w = map(constrain(state.ribbon_raw, 0, 1023), 0, 1023, 0, SCREEN_WIDTH);
+    int w = state.ribbon_pos * SCREEN_WIDTH;   // même calibration que le pitch
     display.drawRect(0, 50, SCREEN_WIDTH, 10, SSD1306_WHITE);
     if (playing) display.fillRect(0, 50, w, 10, SSD1306_WHITE);
 
